@@ -1,0 +1,26 @@
+import { pgTable, varchar, timestamp, bigint, text } from "drizzle-orm/pg-core";
+import { row_status } from "./row-status";
+
+export const game = pgTable("game", {
+  id: bigint("id", { mode: "number" })
+    .primaryKey()
+    .generatedByDefaultAsIdentity(),
+  name: varchar("name", { length: 250 }).notNull().unique(),
+  description: text("description"),
+  start_date: timestamp("start_date", { withTimezone: true }).notNull(),
+  end_date: timestamp("end_date", { withTimezone: true }).notNull(),
+  status: varchar("status", { length: 10 })
+    .notNull()
+    .references(() => row_status.status, {
+      onDelete: "no action",
+      onUpdate: "no action",
+    })
+    .default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});

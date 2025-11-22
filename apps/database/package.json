@@ -1,0 +1,30 @@
+{
+  "name": "@adaptive-game/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:test": "tsx scripts/test-connection.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "dev": "tsx examples/basic-usage.ts",
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "create-table": "node scripts/create-table.js"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.33.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "postgres": "^3.4.3",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "drizzle-kit": "^0.24.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}

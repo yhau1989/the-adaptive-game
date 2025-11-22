@@ -1,0 +1,16 @@
+# Environment files
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Drizzle
+migrations/
