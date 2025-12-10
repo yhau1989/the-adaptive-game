@@ -1,15 +1,9 @@
-import {
-  pgTable,
-  varchar,
-  timestamp,
-  bigint,
-  numeric,
-  integer,
-} from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, bigint } from "drizzle-orm/pg-core";
 import { row_status } from "./row-status";
 import { node_type } from "./node-type";
 import { game } from "./game";
 
+// estudiantes
 export const owner = pgTable("owner", {
   id: bigint("id", { mode: "number" })
     .primaryKey()

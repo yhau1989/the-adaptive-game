@@ -70,7 +70,7 @@ export default async function NewGamePage() {
               <h2 className="text-xl font-semibold text-violet-900">
                 Configura los parámetros del juego
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-violet-600">
+              <p className="text-sm leading-6 text-violet-600">
                 Completa la información en cada bloque. Más adelante podremos
                 conectar este formulario con acciones del servidor para
                 persistir la configuración en la base de datos.
