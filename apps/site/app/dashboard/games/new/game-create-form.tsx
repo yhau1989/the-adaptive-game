@@ -116,8 +116,16 @@ interface GameFormData {
   // Costos
   stockCost: number;
   pendingOrderCost: number;
-  purchaseCost: number;
-  salePrice: number;
+  purchaseCostGlobal: number;
+  purchaseCostManufacturer: number;
+  purchaseCostDistributor: number;
+  purchaseCostWholesaler: number;
+  purchaseCostRetail: number;
+  salePriceGlobal: number;
+  salePriceManufacturer: number;
+  salePriceDistributor: number;
+  salePriceWholesaler: number;
+  salePriceRetail: number;
   costsNodeType: string;
 
   // Eventos
@@ -203,8 +211,16 @@ export function GameCreateForm() {
       // Costos
       stockCost: 0,
       pendingOrderCost: 0,
-      purchaseCost: 0,
-      salePrice: 0,
+      purchaseCostGlobal: 0,
+      purchaseCostManufacturer: 0,
+      purchaseCostDistributor: 0,
+      purchaseCostWholesaler: 0,
+      purchaseCostRetail: 0,
+      salePriceGlobal: 0,
+      salePriceManufacturer: 0,
+      salePriceDistributor: 0,
+      salePriceWholesaler: 0,
+      salePriceRetail: 0,
       // Eventos
       eventsPeriod: 0,
       // Restricciones
@@ -1385,37 +1401,245 @@ export function GameCreateForm() {
                 />
                 <FieldError>{errors.pendingOrderCost?.message}</FieldError>
               </Field>
-              <Field>
-                <FieldLabel htmlFor="cost-purchase">Costo de compra</FieldLabel>
-                <Input
-                  id="cost-purchase"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  aria-invalid={!!errors.purchaseCost}
-                  {...register("purchaseCost", {
-                    required: "El costo de compra es requerido",
-                    valueAsNumber: true,
-                  })}
-                />
-                <FieldError>{errors.purchaseCost?.message}</FieldError>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="cost-sale">Precio de venta</FieldLabel>
-                <Input
-                  id="cost-sale"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  aria-invalid={!!errors.salePrice}
-                  {...register("salePrice", {
-                    required: "El precio de venta es requerido",
-                    valueAsNumber: true,
-                  })}
-                />
-                <FieldError>{errors.salePrice?.message}</FieldError>
-              </Field>
             </div>
+          </FieldGroup>
+        </FieldSet>
+
+        <Accordion
+          type="single"
+          collapsible
+          className="rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
+          <AccordionItem value="purchase-price" className="border-none">
+            <AccordionTrigger className="px-6 py-4 text-base font-semibold hover:no-underline">
+              Costo de compra
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <FieldGroup className="gap-6">
+                <Field>
+                  <FieldLabel htmlFor="purchase-cost-global">
+                    Valor global (aplica a todos los nodos)
+                  </FieldLabel>
+                  <FieldDescription>
+                    Si defines un valor global, se aplicará a todos los tipos de
+                    nodos a menos que los edites individualmente
+                  </FieldDescription>
+                  <Input
+                    id="purchase-cost-global"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0"
+                    aria-invalid={!!errors.purchaseCostGlobal}
+                    {...register("purchaseCostGlobal", {
+                      required: "El valor global es requerido",
+                      valueAsNumber: true,
+                    })}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value === "" ? 0 : parseFloat(e.target.value);
+                      setValue("purchaseCostGlobal", value);
+                      setValue("purchaseCostManufacturer", value);
+                      setValue("purchaseCostDistributor", value);
+                      setValue("purchaseCostWholesaler", value);
+                      setValue("purchaseCostRetail", value);
+                    }}
+                  />
+                </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="purchase-cost-manufacturer">
+                      Fabricante
+                    </FieldLabel>
+                    <Input
+                      id="purchase-cost-manufacturer"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.purchaseCostManufacturer}
+                      {...register("purchaseCostManufacturer", {
+                        required: "El valor del fabricante es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="purchase-cost-distributor">
+                      Distribuidor
+                    </FieldLabel>
+                    <Input
+                      id="purchase-cost-distributor"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.purchaseCostDistributor}
+                      {...register("purchaseCostDistributor", {
+                        required: "El valor del distribuidor es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="purchase-cost-wholesaler">
+                      Mayorista
+                    </FieldLabel>
+                    <Input
+                      id="purchase-cost-wholesaler"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.purchaseCostWholesaler}
+                      {...register("purchaseCostWholesaler", {
+                        required: "El valor del mayorista es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="purchase-cost-retail">
+                      Retail
+                    </FieldLabel>
+                    <Input
+                      id="purchase-cost-retail"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.purchaseCostRetail}
+                      {...register("purchaseCostRetail", {
+                        required: "El valor del retail es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                </div>
+              </FieldGroup>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <Accordion
+          type="single"
+          collapsible
+          className="rounded-lg border border-slate-200 bg-white shadow-sm"
+        >
+          <AccordionItem value="sale-price" className="border-none">
+            <AccordionTrigger className="px-6 py-4 text-base font-semibold hover:no-underline">
+              Precio de venta
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <FieldGroup className="gap-6">
+                <Field>
+                  <FieldLabel htmlFor="sale-price-global">
+                    Valor global (aplica a todos los nodos)
+                  </FieldLabel>
+                  <FieldDescription>
+                    Si defines un valor global, se aplicará a todos los tipos de
+                    nodos a menos que los edites individualmente
+                  </FieldDescription>
+                  <Input
+                    id="sale-price-global"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0"
+                    aria-invalid={!!errors.salePriceGlobal}
+                    {...register("salePriceGlobal", {
+                      required: "El valor global es requerido",
+                      valueAsNumber: true,
+                    })}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value === "" ? 0 : parseFloat(e.target.value);
+                      setValue("salePriceGlobal", value);
+                      setValue("salePriceManufacturer", value);
+                      setValue("salePriceDistributor", value);
+                      setValue("salePriceWholesaler", value);
+                      setValue("salePriceRetail", value);
+                    }}
+                  />
+                </Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="sale-price-manufacturer">
+                      Fabricante
+                    </FieldLabel>
+                    <Input
+                      id="sale-price-manufacturer"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.salePriceManufacturer}
+                      {...register("salePriceManufacturer", {
+                        required: "El valor del fabricante es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="sale-price-distributor">
+                      Distribuidor
+                    </FieldLabel>
+                    <Input
+                      id="sale-price-distributor"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.salePriceDistributor}
+                      {...register("salePriceDistributor", {
+                        required: "El valor del distribuidor es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="sale-price-wholesaler">
+                      Mayorista
+                    </FieldLabel>
+                    <Input
+                      id="sale-price-wholesaler"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.salePriceWholesaler}
+                      {...register("salePriceWholesaler", {
+                        required: "El valor del mayorista es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="sale-price-retail">Retail</FieldLabel>
+                    <Input
+                      id="sale-price-retail"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0"
+                      aria-invalid={!!errors.salePriceRetail}
+                      {...register("salePriceRetail", {
+                        required: "El valor del retail es requerido",
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                </div>
+              </FieldGroup>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <FieldSet className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <FieldLegend>Configuración de costos</FieldLegend>
+          <FieldGroup className="gap-6">
             <Field>
               <FieldLabel htmlFor="cost-node-type">Tipo de nodo</FieldLabel>
               <Input
