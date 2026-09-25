@@ -8,33 +8,18 @@ import {
   ChevronLeft,
   CreditCard,
   Gamepad2,
-  LifeBuoy,
   LogOut,
   Menu,
-  Search,
-  Settings,
   UserCog,
-  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UIDropdown } from "@repo/ui/dropdown";
+import type { MenuProps } from "antd";
 import { logoutAction } from "./actions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type NavItem = {
   label: string;
   description: string;
-  icon: ComponentType<{ className?: string }>;
-};
-
-type QuickItem = {
-  label: string;
   icon: ComponentType<{ className?: string }>;
 };
 
@@ -44,27 +29,22 @@ const NAV_ITEMS: NavItem[] = [
     description: "Gestiona campañas y niveles",
     icon: Gamepad2,
   },
-  //   {
-  //     label: "Perfil del usuario",
-  //     description: "Actualiza tus datos y preferencias",
-  //     icon: UserRound,
-  //   },
 ];
 
-const QUICK_ACTIONS: QuickItem[] = [
-  {
-    label: "Buscar campañas",
-    icon: Search,
-  },
-  {
-    label: "Centro de ayuda",
-    icon: LifeBuoy,
-  },
-  {
-    label: "Configuración",
-    icon: Settings,
-  },
-];
+function MenuItemRow({
+  icon: Icon,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-violet-50">
+      <Icon className="h-4 w-4 text-violet-500" />
+      {children}
+    </span>
+  );
+}
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -74,18 +54,71 @@ export function Sidebar() {
     setIsCollapsed((prev) => !prev);
   };
 
+  const menuItems: NonNullable<MenuProps["items"]> = [
+    {
+      key: "profile-header",
+      type: "group",
+      label: (
+        <span className="flex items-center gap-3 border-b border-zinc-200/80 px-4 py-3 text-sm font-medium text-slate-900">
+          <Image
+            src="https://i.pravatar.cc/60?img=32"
+            alt="Avatar del usuario"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <span className="flex flex-col">
+            <span>Usuario Demo</span>
+            <span className="text-xs font-normal text-slate-500">
+              demo@adaptive.game
+            </span>
+          </span>
+        </span>
+      ),
+    },
+    { type: "divider" },
+    {
+      key: "account",
+      label: <MenuItemRow icon={UserCog}>Cuenta</MenuItemRow>,
+    },
+    {
+      key: "billing",
+      label: <MenuItemRow icon={CreditCard}>Facturación</MenuItemRow>,
+    },
+    {
+      key: "notifications",
+      label: <MenuItemRow icon={Bell}>Notificaciones</MenuItemRow>,
+    },
+    { type: "divider" },
+    {
+      key: "logout",
+      danger: true,
+      label: (
+        <form action={logoutAction} className="contents">
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 px-4 py-2 text-rose-600 hover:bg-rose-50"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar sesión
+          </button>
+        </form>
+      ),
+    },
+  ];
+
   return (
     <aside
       className={cn(
         "relative flex min-h-screen flex-col bg-linear-to-b from-violet-900 via-violet-800 to-violet-900 text-violet-100 shadow-2xl",
         "transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-20" : "w-64"
+        isCollapsed ? "w-20" : "w-64",
       )}
     >
       <div
         className={cn(
           "flex items-center gap-3 px-4 py-6",
-          isCollapsed ? "justify-center" : "justify-start"
+          isCollapsed ? "justify-center" : "justify-start",
         )}
       >
         {!isCollapsed ? (
@@ -121,7 +154,7 @@ export function Sidebar() {
                 isCollapsed ? "justify-center" : "justify-start",
                 isActive
                   ? "border-violet-400/70 bg-violet-700/60 shadow-inner"
-                  : "hover:border-violet-400/30 hover:bg-violet-700/40"
+                  : "hover:border-violet-400/30 hover:bg-violet-700/40",
               )}
             >
               <Icon
@@ -129,7 +162,7 @@ export function Sidebar() {
                   "h-5 w-5 text-violet-100 transition",
                   isActive
                     ? "text-violet-50"
-                    : "text-violet-200 group-hover:text-violet-50"
+                    : "text-violet-200 group-hover:text-violet-50",
                 )}
               />
               {!isCollapsed ? (
@@ -147,35 +180,23 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* {!isCollapsed ? (
-        <div className="mt-8 px-3">
-          <div className="rounded-2xl border border-violet-600/40 bg-violet-800/50 p-4 shadow-inner shadow-violet-900/30">
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-200/80">
-              Accesos rápidos
-            </p>
-            <div className="mt-3 space-y-1.5">
-              {QUICK_ACTIONS.map((action) => (
-                <QuickAction key={action.label} {...action} />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null} */}
-
       <div
         className={cn(
           "mt-auto flex px-3 pb-6",
-          isCollapsed ? "justify-center" : "justify-start"
+          isCollapsed ? "justify-center" : "justify-start",
         )}
       >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <UIDropdown
+          items={menuItems}
+          placement="bottomRight"
+          classNames={{ root: "antd-sidebar-dropdown" }}
+          trigger={
             <button
               type="button"
               className={cn(
                 "flex w-full items-center gap-3 rounded-2xl border border-violet-600/40 bg-violet-800/60 text-left transition hover:border-violet-300/70 hover:bg-violet-700/60",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900",
-                isCollapsed ? "justify-center p-2" : "p-3"
+                isCollapsed ? "justify-center p-2" : "p-3",
               )}
             >
               <Image
@@ -198,70 +219,24 @@ export function Sidebar() {
               <ChevronDown
                 className={cn(
                   "h-4 w-4 text-violet-200 transition-transform",
-                  !isCollapsed && "ml-auto"
+                  !isCollapsed && "ml-auto",
                 )}
               />
             </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            side="right"
-            align="center"
-            sideOffset={14}
-            alignOffset={-32}
-            className="w-72 rounded-3xl border border-zinc-200 bg-white/95 p-0 text-slate-700 shadow-xl shadow-violet-200/60"
-          >
-            <DropdownMenuLabel className="flex items-center gap-3 border-b border-zinc-200/80 px-4 py-3 text-sm font-medium text-slate-900">
-              <Image
-                src="https://i.pravatar.cc/60?img=32"
-                alt="Avatar del usuario"
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              <span className="flex flex-col">
-                <span>Usuario Demo</span>
-                <span className="text-xs font-normal text-slate-500">
-                  demo@adaptive.game
-                </span>
-              </span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-zinc-200" />
-            <DropdownMenuItem className="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-violet-50">
-              <UserCog className="h-4 w-4 text-violet-500" />
-              Cuenta
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-violet-50">
-              <CreditCard className="h-4 w-4 text-violet-500" />
-              Facturación
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-violet-50">
-              <Bell className="h-4 w-4 text-violet-500" />
-              Notificaciones
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-zinc-200" />
-            <form action={logoutAction}>
-              <DropdownMenuItem
-                variant="destructive"
-                className="flex items-center gap-3 px-4 py-2 text-rose-600 hover:bg-rose-50"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  const target = event.currentTarget as HTMLElement | null;
-                  target?.closest("form")?.requestSubmit();
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-                Cerrar sesión
-              </DropdownMenuItem>
-            </form>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+        />
       </div>
     </aside>
   );
 }
 
-function QuickAction({ icon: Icon, label }: QuickItem) {
+function QuickAction({
+  icon: Icon,
+  label,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+}) {
   return (
     <button
       type="button"
@@ -272,3 +247,7 @@ function QuickAction({ icon: Icon, label }: QuickItem) {
     </button>
   );
 }
+
+// QuickAction se reserva para reactivar la sección "Accesos rápidos"
+// comentada arriba. Evita el warning de unused-vars.
+void QuickAction;
