@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "engines": {
-    "node": "26.x"
-  },
   "buildCommand": "pnpm turbo run build --filter=site...",
   "installCommand": "pnpm install --frozen-lockfile=false",
   "framework": "nextjs",
