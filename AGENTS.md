@@ -10,6 +10,13 @@ Este archivo define cómo cualquier agente de IA (Claude Code, Cursor, Copilot, 
 
 **The Adaptive Game** es una plataforma web para correr partidas del **Beer Distribution Game** (el juego de simulación de cadena de suministro del MIT) de forma digital y configurable. Un `owner` (facilitador/profesor) crea una `game`, la configura (costos, tiempos de entrega, stock inicial, restricciones de pedido, notificaciones, eventos) y los jugadores operan los nodos de la cadena (`node-type`: Retail, Mayorista, Distribuidor, Fabricante) ronda a ronda.
 
+El proyecto se organiza en **13 módulos** (M1–M13) y se construye en **8 fases** (F0–F7). La vista del jugador (M13) incluye un **mapa pedagógico** con los 4 nodos, camiones animados y un **modal "¿Qué ocurre esta semana?"** que muestra el cálculo de la ronda al cerrarse — replica el enfoque educativo de Zensimu.
+
+> **Documentos vivos que extienden este `AGENTS.md`** (mantener sincronizados — ver §12):
+>
+> - [`PLAN_BDG.md`](./PLAN_BDG.md) — detalle de módulos M1–M13, fases F0–F7, tareas ordenadas, plan por sprint, riesgos.
+> - [`INTERFAZ.md`](./INTERFAZ.md) — wireframes de las ~21 pantallas, tokens visuales, componentes compartidos, semántica de color.
+
 ## 2. Diagnóstico del estado actual (por qué este documento existe)
 
 El repo tiene ~1 año, y una auditoría de la estructura encontró desalineaciones concretas con el stack objetivo que este AGENTS.md fija. `MIGRATION.md` (raíz del repo) contiene el runbook paso a paso; esta sección resume **qué** está mal, no **cómo** arreglarlo:
@@ -116,13 +123,28 @@ with check (owner_id = (select auth.uid()));
 
 (Si se conserva la autenticación custom — opción B de §7 — `auth.uid()` no existe y la policy debe leer un claim propio inyectado vía `set_config`/JWT firmado por Supabase con un secreto compartido; hay que decidir §7 antes de escribir estas policies.)
 
+### Tablas de ejecución a crear en `packages/db/schema` (fase F4)
+
+Las tablas de arriba modelan la **configuración inicial** del juego. La **ejecución ronda a ronda** la modelan 4 tablas nuevas que se añaden en la fase `F4` del plan (`PLAN_BDG.md` §F4.1) mediante una migración Drizzle:
+
+| Tabla nueva           | Rol durante la simulación                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `game-round`          | Una ronda por juego: número, estado (`open`/`closed`), timestamp de cierre.                                                      |
+| `node-round-state`    | Estado por nodo por ronda: inventario, backorder, pedidos pendientes, costo total, ingreso, margen.                              |
+| `node-order`          | Pedido colocado por un jugador (o por la IA) en una ronda.                                                                       |
+| `node-shipment`       | Despacho entre nodos programado en una ronda con `arrives_in_round` (alimenta la animación de camiones del mapa pedagógico M13). |
+| `node-kpi` (opcional) | KPIs precomputados por nodo por ronda (nivel de servicio, ventas a tiempo).                                                      |
+
+Mismo criterio RLS que arriba: una fila solo es legible si el jugador figura como `owner` con `user_id = auth.uid()` para ese `game_id`. El motor de simulación vive en `apps/site/lib/simulation/advanceRound.ts` (puro, sin BD, testeable).
+
 ## 6. Reglas de arquitectura no negociables
 
 1. **Drizzle solo define y migra el esquema**, desde `packages/db`. Prohibido importar el query builder de `drizzle-orm` fuera de `packages/db`. El `db.ts` que hoy vive en `apps/database/src` y el que se importa desde `apps/site/lib/db.ts` **se eliminan** — ver `MIGRATION.md` fase 4 y 7.
-2. **`@supabase/supabase-js` es el único cliente de datos en runtime**, a través de `packages/supabase-client` (`createBrowserClient`, `createServerClient`, `createAdminClient`). RLS activa en todas las tablas de §5.
+2. **`@supabase/supabase-js` es el único cliente de datos en runtime**, a través de `packages/supabase-client` (`createBrowserClient`, `createServerClient`, `createAdminClient`). RLS activa en todas las tablas de §5 y en las tablas de ejecución (4 nuevas).
 3. **Los tipos de la base de datos son generados**, no escritos a mano: `pnpm db:types` → `packages/types`.
 4. **Validación con `zod` antes de tocar la base** en cualquier Server Action / Route Handler.
 5. **Un componente, un archivo**, ~200 líneas como techo — aplica de inmediato a `game-create-form.tsx`.
+6. **El modal pedagógico de M13 ("¿Qué ocurre esta semana?") refleja la fórmula del motor.** El "transparente de cálculo" que muestra debe ser idéntico a lo que produce `apps/site/lib/simulation/advanceRound.ts`. Cubierto por el test de regresión `PLAN_BDG.md` §F5.12. Si cambia la fórmula del motor, se actualiza también el modal — son la misma verdad.
 
 ## 7. Decisión pendiente: autenticación
 
@@ -153,6 +175,20 @@ Mientras no se confirme, `MIGRATION.md` avanza asumiendo **Opción A** y deja ma
 `clsx` y `tailwind-merge` se conservan (el helper `cn()` sigue siendo útil para clases de layout); lo que se retira es la capa de primitivos Radix + `components.json` de shadcn.
 
 En `packages/ui`, igual que en el AGENTS.md genérico: capas explícitas de Tailwind sin `preflight.css` para no pisar los estilos base de antd, y `ConfigProvider` con los tokens de color/tipografía actuales de `apps/site/app/globals.css` para no perder el look actual.
+
+### Componentes del módulo pedagógico (M13)
+
+Para soportar la vista del jugador con mapa, modal y sidebar (M7/M8 reusando los mismos componentes), `packages/ui/src/` aloja además los siguientes componentes, **todos < 200 líneas** (regla 5) y **solo SVG/CSS** para animaciones en MVP (sin Lottie, sin WebGL):
+
+| Componente            | Archivo                                   | Uso                                                                                                                     |
+| --------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `<ChainMap>`          | `packages/ui/src/chain-map.tsx`           | SVG con los 4 nodos + paths curvos + posición de camiones. Reutilizado por jugador y facilitador.                       |
+| `<Truck>`             | `packages/ui/src/truck.tsx`               | Camión SVG animado con `@keyframes` + `transform: translate`. Posición = `(currentRound − shipment.round) / lead_time`. |
+| `<NodeCard>`          | `packages/ui/src/node-card.tsx`           | Tarjeta flotante anclada al nodo del jugador (métricas + input de pedido).                                              |
+| `<PlayerSidebar>`     | `packages/ui/src/player-sidebar.tsx`      | Columna fija izquierda con Finalizar, Reiniciar, Instrucciones, Animación, Estadísticas, Mensajes.                      |
+| `<RoundSummaryModal>` | `packages/ui/src/round-summary-modal.tsx` | Modal pedagógico con el "transparente de cálculo" al cerrar cada ronda.                                                 |
+
+Iconos SVG de los nodos (Retail / Mayorista / Distribuidor / Fabricante / Truck) en `packages/ui/src/assets/icons/*.svg`. Detalles visuales en `INTERFAZ.md` §19, §22, §23.
 
 ## 9. Variables de entorno
 
@@ -195,8 +231,22 @@ pnpm db:types        # regenera packages/types desde Supabase
 
 - [ ] `pnpm lint && pnpm typecheck && pnpm test` pasan.
 - [ ] Ninguna importación del query builder de Drizzle fuera de `packages/db`.
-- [ ] Toda tabla de §5 con RLS habilitada y policy explícita.
+- [ ] Toda tabla de §5 (incluidas las 4 tablas de ejecución de §5) con RLS habilitada y policy explícita.
 - [ ] Ninguna clave `sb_secret_...` referenciada en código de cliente.
 - [ ] Si cambió el esquema: migración generada + `pnpm db:types` corrido.
 - [ ] Componentes nuevos en Ant Design, no en Radix/shadcn.
 - [ ] Ningún archivo de componente nuevo por encima de ~200 líneas.
+- [ ] Si tocaste la fórmula del motor de simulación (`lib/simulation/advanceRound.ts`), regenerar las expectations del test F5.12 (paridad con el modal pedagógico).
+- [ ] Si cambiaste pantallas/tareas/riesgos, `PLAN_BDG.md` e `INTERFAZ.md` actualizados en el mismo PR.
+
+## 12. Documentos vivos del proyecto
+
+`AGENTS.md` es la fuente de verdad de **arquitectura y reglas**. El detalle operativo vive en dos documentos hermanos. Se actualizan en el mismo PR cuando hay un cambio que les afecta:
+
+| Doc                            | Qué contiene                                                                                                 | Cuándo actualizarlo                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| [`PLAN_BDG.md`](./PLAN_BDG.md) | 13 módulos (M1–M13), 8 fases (F0–F7), ~125 puntos, sprints S1–S6, riesgos R1–R11, decisiones abiertas.       | Cambio en módulo, fase, tarea, riesgo, sprint.            |
+| [`INTERFAZ.md`](./INTERFAZ.md) | Wireframes ASCII de ~21 pantallas, tokens visuales, componentes compartidos, semántica de color, responsive. | Cambio en pantalla, wireframe, componente visual, color.  |
+| `AGENTS.md` (este archivo)     | Stack, estructura de carpetas, esquema, reglas no negociables, checklist.                                    | Cambio en arquitectura, regla, tabla, comando, checklist. |
+
+**Regla**: si los tres documentos se contradicen, gana `AGENTS.md`. Cualquier refactor con impacto cruzado debe tocar los docs en el mismo commit.

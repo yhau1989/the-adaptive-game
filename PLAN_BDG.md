@@ -176,57 +176,9 @@ Núcleo del juego. Una **ronda** = (1) arribos → (2) despacho → (3) actualiz
 - **Acciones**: `placeOrderAction(gameId, qty)`.
 - **Criterios de aceptación**: solo puede ver el juego si figura como `owner.node_type` de ese juego. Una vez cerrada la ronda, el form se bloquea y se dispara el modal pedagógico de M13.
 
-### M13 · Vista pedagógica del jugador (mapa + modal "¿Qué ocurre esta semana?")
+### M8 · Vista del facilitador
 
-> Pieza educativa. Replica el enfoque de Zensimu: el jugador **ve la cadena entera**, no solo su nodo, y entiende el efecto de su pedido viendo cómo se mueven los camiones y abriendo el modal pedagógico al cierre de cada ronda.
-
-- **Pantallas**:
-  - `/play/[id]` — reescrita: pasa a ser el **mapa de la cadena** (layout principal del jugador) con la tarjeta flotante del nodo anclada.
-  - `/play/[id]/round-close` — modal pedagógico que se muestra al cerrar una ronda (también se puede reabrir manualmente).
-- **Mapa de la cadena (`/play/[id]`)**:
-  - **Lienzo isométrico** (SVG/CSS, sin libs 3D en MVP) con los 4 nodos posicionados en cruz:
-    - Retail (1°) abajo-izquierda · Mayorista (2°) abajo-centro · Distribuidor (3°) arriba-centro · Fabricante (4°) arriba-derecha.
-    - Líneas curvas entre Retail→Mayorista→Distribuidor→Fabricante (los pedidos viajan "río arriba" en el modelo; el despacho baja).
-  - **Camiones animados**: un componente `<Truck>` por envío en tránsito. Se posiciona sobre la línea correspondiente según `node-shipment.arrives_in_round - round.number`. CSS animation (no Lottie en MVP).
-  - **Tarjeta flotante del nodo actual** anclada sobre su edificio: muestra Stock, Costo, Recibo, Demanda, Envío y el input "Ordenar" (esto reemplaza al panel tradicional de M7; ver `INTERFAZ.md` §19).
-  - **Sidebar izquierdo fijo** (solo del jugador) con acciones:
-    - `Finalizar` → confirmar salida del juego (modal de confirmación).
-    - `Reiniciar` → reabrir la ronda actual (solo si la ronda aún está `open` y el jugador no ha enviado pedido).
-    - `Instrucciones` → drawer con el manual del juego.
-    - `Animación` → toggle que muestra/oculta el movimiento de camiones.
-    - `Estadísticas` → modal con KPIs personales (costo, inventario promedio, nivel de servicio, ventas a tiempo).
-    - `Mensajes` → drawer con `events-message-config` activos.
-- **Modal pedagógico "¿Qué ocurre esta semana N?"**:
-  - Aparece automáticamente al cierre de la ronda (cuando `closeRoundAction` actualiza el estado del jugador).
-  - Estructura (mapeada al Excel):
-    - **Título**: "¿Qué ocurre semana N?" + botón cerrar.
-    - **Diagrama del nodo central** (su edificio + cajas de stock) con 4 flechas:
-      - **Demanda entrante** desde el cliente (Retail) o nodo río arriba.
-      - **Recibo entrante** desde el nodo río arriba (camión que arriba esta semana).
-      - **Envío saliente** hacia el cliente o nodo río abajo.
-      - **Cálculo**: Stock inicial + Recibo − Envío = Stock final.
-    - **Resumen numérico** con la "transparente de cálculo":
-      - `▲ Stock: 12` (inicial)
-      - `+10 -4 → Stock final: 18` (delta visual con colores success/error)
-      - `💼 Coste inicial: €24` (o $)
-      - `+€9 → Coste final: €33`
-    - **Mensaje de feedback** dinámico según el resultado:
-      - ✅ "Tiene suficiente Stock para cumplir con la demanda" (si cubrió BO + demanda).
-      - ⚠️ "Backorder aumenta: ahora tiene N unidades pendientes" (si no alcanza).
-      - 🚚 "El próximo recibo de N unidades llegará en K semanas".
-    - **Acciones**: `Ver animación de nuevo` (reproduce la transición de camiones), `Siguiente paso: Ordenar` (cierra y vuelve al mapa con el input activo), checkbox "Mostrar cada semana" (lo abre automáticamente en cada ronda).
-- **Server Actions nuevas**: `finalizeGameForPlayerAction`, `reopenRoundAction` (jugador), `toggleAnimationPreferenceAction` (player UI).
-- **Persistencia**: nada nuevo en BD. La animación se deriva del estado en vivo (`node-round-state` + `node-shipment`).
-- **Criterios de aceptación**:
-  - El jugador ve los 4 nodos con sus nombres editables y camiones desplazándose en cada cierre de ronda.
-  - Al cerrar una ronda, el modal pedagógico aparece sin recarga de página (polling o Realtime).
-  - El modal es **didáctico**: muestra los 4 valores (demanda, recibo, envío, stock final) con animación de "transparente".
-  - El sidebar izquierdo solo aparece para `rol=player` (no para facilitadores).
-  - Las acciones "Finalizar" y "Reiniciar" piden confirmación con `Modal.confirm` de Ant.
-- **Dependencias técnicas**:
-  - Animación CSS: preferimos `@keyframes` + `transform` (performante). Lottie solo si se aprueba después.
-  - Iconos de nodos: SVG propios en `packages/ui/src/assets/` (`/icons/retail.svg`, `/wholesaler.svg`, `/distributor.svg`, `/manufacturer.svg`, `/truck.svg`).
-  - Render del modal: Ant `Modal` con `footer` custom. El facilitador **también ve** el mapa pedagógico (M13) en su consola, con un toggle "Modo facilitador" que añade controles extra (cerrar ronda forzado, etc.).
+- **Pantalla**: `/dashboard/games/[id]/simulate`. El facilitador **también ve** el mapa pedagógico (M13) en su consola, con un toggle "Modo facilitador" que añade controles extra (cerrar ronda forzado, etc.).
 - **Acciones**:
   - `pauseGameAction`, `resumeGameAction`, `forceCloseRoundAction`.
   - `restartGameAction` (reinicia rondas).
@@ -261,7 +213,7 @@ Núcleo del juego. Una **ronda** = (1) arribos → (2) despacho → (3) actualiz
     - **Diagrama del nodo central** (su edificio + cajas de stock) con 4 flechas:
       - **Demanda entrante** desde el cliente (Retail) o nodo río arriba.
       - **Recibo entrante** desde el nodo río arriba (camión que arriba esta semana).
-      - **Envío saliente** hacia el cliente o nodo río abajo.
+      - **Envío saliante** hacia el cliente o nodo río abajo.
       - **Cálculo**: Stock inicial + Recibo − Envío = Stock final.
     - **Resumen numérico** con la "transparente de cálculo":
       - `▲ Stock: 12` (inicial)
@@ -451,19 +403,19 @@ Estas tablas entran en **F4** del plan, con su propia migración Drizzle.
 
 ## 7. Riesgos y decisiones abiertas
 
-| #   | Riesgo / decisión                                                                                                                            | Impacto                        | Mitigación                                                                                                                       |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| R1  | **Auth: A vs B** (Supabase Auth vs custom) sigue sin resolverse (AGENTS.md §7).                                                              | Bloquea F1 y las policies RLS. | Por defecto A. Si se confirma B, multiplicar trabajo de F1 por ~2× y rehacer policies.                                           |
-| R2  | El Excel dice "Stock de seguridad" pero **no existe tabla** en el esquema Drizzle.                                                           | Afecta F3.                     | Decisión propuesta: añadir columna `safety_stock` a `initial-stock-config` (mínimo cambio).                                      |
-| R3  | `initial-claim-config` representa la **demanda por periodo**, no backorder (a pesar del nombre).                                             | Confusión.                     | Renombrar a `demand-config` en F3; añadir nueva tabla `initial-backorder-config` o usar `node-round-state.backorder` en ronda 1. |
-| R4  | El form actual tiene 1 input "Variabilidad" suelto, pero el Excel distingue **variabilidad de suministro** vs **variabilidad de lead time**. | Afecta M4.                     | Ya están separados en `_sections/types.ts` (`supplyVariability`, `leadTimeVar`). Solo confirmar persistencia.                    |
-| R5  | "Tipo" del nodo en el Excel (Persona/Computadora) no tiene columna en `owner`.                                                               | Afecta M5, M6, M7.             | Añadir `owner.type` (`person` \| `computer`) en F4.1.                                                                            |
-| R6  | El componente `game-create-form.tsx` actual mezcla campos con la cardinalidad incorrecta (muchos `*NodeType` repetidos por sección).         | F3.                            | Mantener el form con el layout actual pero **persistir** solo las 8 filas por sección (1 por nodo), no `node_type` por input.    |
-| R7  | Sin cron ni Realtime para cierre automático de rondas.                                                                                       | UX.                            | Polling en F6 + job determinístico por demanda (F4.10). Realtime en F+1.                                                         |
-| R8  | Migración Ant Design (AGENTS.md §8) es grande; hacerlo en medio de F0-F3 añade riesgo.                                                       | Estética + productividad.      | Hacer F0.8 como sub-sprint paralelo al final de S1, sin bloquear F1-F3 (siguen con shadcn hasta que esté listo).                 |
-| R9  | Migración de `apps/database` → `packages/db` puede romper imports de `lib/db.ts`.                                                            | F0.                            | Hacer F0.2 + F0.7 en el mismo PR atómico.                                                                                        |     | R10 | **Animación de camiones**: el mapa pedagógico (M13) puede derivar en requisitos pesados (Lottie, WebGL, sprites). | F5. | MVP = SVG con `@keyframes` CSS y `transform: translate`. Lottie solo si se valida después. Performance budget: 60 fps en laptop medio. |
-| R11 | El modal pedagógico debe **mostrar el cálculo real** del motor. Si cambia la fórmula en `lib/simulation`, hay que actualizar también M13.    | F5/F4.                         | Test de regresión F5.12 que verifica la paridad entre `advanceRound` y el resumen del modal.                                     |     | R10 | **Animación de camiones**: el mapa pedagógico (M13) puede derivar en requisitos pesados (Lottie, WebGL, sprites). | F5. | MVP = SVG con `@keyframes` CSS y `transform: translate`. Lottie solo si se valida después. Performance budget: 60 fps en laptop medio. |
-| R11 | El modal pedagógico debe **mostrar el cálculo real** del motor. Si cambia la fórmula en `lib/simulation`, hay que actualizar también M13.    | F5/F4.                         | Test de regresión F5.12 que verifica la paridad entre `advanceRound` y el resumen del modal.                                     |
+| #   | Riesgo / decisión                                                                                                                            | Impacto                        | Mitigación                                                                                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **Auth: A vs B** (Supabase Auth vs custom) sigue sin resolverse (AGENTS.md §7).                                                              | Bloquea F1 y las policies RLS. | Por defecto A. Si se confirma B, multiplicar trabajo de F1 por ~2× y rehacer policies.                                                 |
+| R2  | El Excel dice "Stock de seguridad" pero **no existe tabla** en el esquema Drizzle.                                                           | Afecta F3.                     | Decisión propuesta: añadir columna `safety_stock` a `initial-stock-config` (mínimo cambio).                                            |
+| R3  | `initial-claim-config` representa la **demanda por periodo**, no backorder (a pesar del nombre).                                             | Confusión.                     | Renombrar a `demand-config` en F3; añadir nueva tabla `initial-backorder-config` o usar `node-round-state.backorder` en ronda 1.       |
+| R4  | El form actual tiene 1 input "Variabilidad" suelto, pero el Excel distingue **variabilidad de suministro** vs **variabilidad de lead time**. | Afecta M4.                     | Ya están separados en `_sections/types.ts` (`supplyVariability`, `leadTimeVar`). Solo confirmar persistencia.                          |
+| R5  | "Tipo" del nodo en el Excel (Persona/Computadora) no tiene columna en `owner`.                                                               | Afecta M5, M6, M7.             | Añadir `owner.type` (`person` \| `computer`) en F4.1.                                                                                  |
+| R6  | El componente `game-create-form.tsx` actual mezcla campos con la cardinalidad incorrecta (muchos `*NodeType` repetidos por sección).         | F3.                            | Mantener el form con el layout actual pero **persistir** solo las 8 filas por sección (1 por nodo), no `node_type` por input.          |
+| R7  | Sin cron ni Realtime para cierre automático de rondas.                                                                                       | UX.                            | Polling en F6 + job determinístico por demanda (F4.10). Realtime en F+1.                                                               |
+| R8  | Migración Ant Design (AGENTS.md §8) es grande; hacerlo en medio de F0-F3 añade riesgo.                                                       | Estética + productividad.      | Hacer F0.8 como sub-sprint paralelo al final de S1, sin bloquear F1-F3 (siguen con shadcn hasta que esté listo).                       |
+| R9  | Migración de `apps/database` → `packages/db` puede romper imports de `lib/db.ts`.                                                            | F0.                            | Hacer F0.2 + F0.7 en el mismo PR atómico.                                                                                              |
+| R10 | **Animación de camiones**: el mapa pedagógico (M13) puede derivar en requisitos pesados (Lottie, WebGL, sprites).                            | F5.                            | MVP = SVG con `@keyframes` CSS y `transform: translate`. Lottie solo si se valida después. Performance budget: 60 fps en laptop medio. |
+| R11 | El modal pedagógico debe **mostrar el cálculo real** del motor. Si cambia la fórmula en `lib/simulation`, hay que actualizar también M13.    | F5/F4.                         | Test de regresión F5.12 que verifica la paridad entre `advanceRound` y el resumen del modal.                                           |
 
 ---
 
