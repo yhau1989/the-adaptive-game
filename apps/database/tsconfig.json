@@ -1,12 +1,16 @@
 {
-  "extends": "@adaptive-game/typescript-config/base.json",
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": false,
     "types": ["node"],
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false
   },
-  "include": ["src/**/*", "drizzle.config.ts"],
+  "include": ["src/**/*", "drizzle.config.ts", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

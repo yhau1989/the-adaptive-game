@@ -9,10 +9,11 @@ import pluginNext from "@next/eslint-plugin-next";
 import { config as baseConfig } from "./base.js";
 
 /**
- * A custom ESLint configuration for libraries that use Next.js.
+ * A custom ESLint configuration for Next.js apps.
+ * Compatible with ESLint 10 Flat Config.
  *
  * @type {import("eslint").Linter.Config[]}
- * */
+ */
 export const nextJsConfig = [
   ...baseConfig,
   js.configs.recommended,
@@ -31,6 +32,8 @@ export const nextJsConfig = [
       ...pluginReact.configs.flat.recommended.languageOptions,
       globals: {
         ...globals.serviceworker,
+        ...globals.browser,
+        ...globals.node,
       },
     },
   },

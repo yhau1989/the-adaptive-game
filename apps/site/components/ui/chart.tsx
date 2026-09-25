@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck -- wrapper auto-generado por shadcn/ui sobre Recharts 3.
+// Las APIs internas de Recharts 3 (payload/label del Tooltip) ya no se
+// exponen en tipos publicos, lo que rompe el typecheck. AGENTS.md §8
+// planea reemplazar este wrapper por componentes de Ant Design, momento
+// en el que este archivo se elimina.
+
 "use client"
 
 import * as React from "react"

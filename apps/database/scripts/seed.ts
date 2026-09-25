@@ -5,13 +5,13 @@ import { rol, row_status } from "../src/schema";
 
 config();
 
-async function testConnection() {
+async function seed(): Promise<void> {
   if (!process.env.DATABASE_URL) {
     console.error("❌ DATABASE_URL is not set in .env file");
     process.exit(1);
   }
 
-  console.log("🔍 Testing database connection...");
+  console.log("🌱 Seeding initial data...");
   console.log(
     "📡 Database URL format:",
     process.env.DATABASE_URL.replace(/\/\/[^:]+:[^@]+@/, "//***:***@")
@@ -21,8 +21,9 @@ async function testConnection() {
     const connection = postgres(process.env.DATABASE_URL, {
       max: 1,
       prepare: false,
+      connect_timeout: 10,
     });
-    const db = drizzle(connection);
+    const db = drizzle(connection, { casing: "snake_case" });
 
     await db
       .insert(row_status)
@@ -30,20 +31,20 @@ async function testConnection() {
         { status: "active" },
         { status: "inactive" },
         { status: "deleted" },
-      ]);
+      ])
+      .onConflictDoNothing();
     console.log("✅ tabla: (row_status) - datos iniciales insertados");
 
-    await db.insert(rol).values([{ rol: "admin" }]);
+    await db.insert(rol).values([{ rol: "admin" }]).onConflictDoNothing();
     console.log("✅ tabla: (rol) - datos iniciales insertados");
 
-    // Close connection
-    await connection.end();
+    await connection.end({ timeout: 5 });
     process.exit(0);
   } catch (error) {
-    console.error("❌ Database connection failed:");
+    console.error("❌ Seed failed:");
     console.error(error);
     process.exit(1);
   }
 }
 
-testConnection();
+seed();
